@@ -5,9 +5,10 @@ import type { SalaryBreakdown } from "~/lib/schemas";
 interface ResultsDisplayProps {
   results: SalaryBreakdown;
   title?: string;
+  isFreelancer?: boolean;
 }
 
-export function ResultsDisplay({ results, title }: ResultsDisplayProps) {
+export function ResultsDisplay({ results, title, isFreelancer }: ResultsDisplayProps) {
   const [isYearly, setIsYearly] = useState(false);
   
   const formatCurrency = (amount: number) => `¥${amount.toLocaleString()}`;
@@ -91,10 +92,12 @@ export function ResultsDisplay({ results, title }: ResultsDisplayProps) {
 
         {/* Social Insurance */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">Social Insurance</h4>
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">
+            {isFreelancer ? "National Insurance" : "Social Insurance"}
+          </h4>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span>Health Insurance:</span>
+              <span>{isFreelancer ? "National Health Insurance:" : "Health Insurance:"}</span>
               <span className="text-orange-600">{formatCurrency(getAmount(results.socialInsurance.healthInsurance, Math.floor(results.socialInsurance.healthInsurance / 12)))}</span>
             </div>
             {results.socialInsurance.nursingCareInsurance > 0 && (
@@ -104,17 +107,24 @@ export function ResultsDisplay({ results, title }: ResultsDisplayProps) {
               </div>
             )}
             <div className="flex justify-between">
-              <span>Pension Insurance:</span>
+              <span>{isFreelancer ? "National Pension:" : "Pension Insurance:"}</span>
               <span className="text-orange-600">{formatCurrency(getAmount(results.socialInsurance.pensionInsurance, Math.floor(results.socialInsurance.pensionInsurance / 12)))}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Employment Insurance:</span>
-              <span className="text-orange-600">{formatCurrency(getAmount(results.socialInsurance.employmentInsurance, Math.floor(results.socialInsurance.employmentInsurance / 12)))}</span>
-            </div>
+            {!isFreelancer && (
+              <div className="flex justify-between">
+                <span>Employment Insurance:</span>
+                <span className="text-orange-600">{formatCurrency(getAmount(results.socialInsurance.employmentInsurance, Math.floor(results.socialInsurance.employmentInsurance / 12)))}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t pt-2">
-              <span className="font-medium">Total Social Insurance:</span>
+              <span className="font-medium">Total {isFreelancer ? "National" : "Social"} Insurance:</span>
               <span className="font-medium text-orange-600">{formatCurrency(getAmount(results.socialInsurance.totalSocialInsurance, Math.floor(results.socialInsurance.totalSocialInsurance / 12)))}</span>
             </div>
+            {isFreelancer && (
+              <p className="text-xs text-gray-500 mt-2">
+                *National pension: Fixed ¥16,980/month regardless of income
+              </p>
+            )}
           </div>
         </div>
 

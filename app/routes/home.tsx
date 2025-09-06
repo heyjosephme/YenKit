@@ -142,7 +142,11 @@ export default function Home() {
                         </Button>
                       )}
                     </div>
-                    <ResultsDisplay results={salary.results} title={salary.title} />
+                    <ResultsDisplay 
+                      results={salary.results} 
+                      title={salary.title}
+                      isFreelancer={salary.input.employmentType === 'freelance'} 
+                    />
                   </div>
                 ))}
               </div>

@@ -25,6 +25,19 @@ export const SOCIAL_INSURANCE = {
   NURSING_CARE_RATE: 0.0159, // 1.59% additional for age 40-64
 };
 
+// Freelancer social insurance (2024)
+export const FREELANCER_INSURANCE = {
+  NATIONAL_PENSION_MONTHLY: 16980, // Fixed monthly amount for 2024
+  NATIONAL_PENSION_ANNUAL: 16980 * 12, // ¥203,760 per year
+  
+  // National health insurance varies by municipality and income
+  // Rough estimate: 10-11% of income (income-based + per-capita + asset-based)
+  NATIONAL_HEALTH_INSURANCE_RATE: 0.105, // ~10.5% average
+  
+  // Nursing care insurance for 40-64 age group
+  NURSING_CARE_RATE: 0.015, // ~1.5% for freelancers
+};
+
 // Prefecture health insurance rates (sample - varies by location)
 export const PREFECTURES: Prefecture[] = [
   { name: "Tokyo", healthInsuranceRate: 0.0991 },

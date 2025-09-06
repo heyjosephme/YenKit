@@ -4,6 +4,7 @@ import {
   RECONSTRUCTION_SURTAX_RATE,
   RESIDENT_TAX_RATE,
   SOCIAL_INSURANCE,
+  FREELANCER_INSURANCE,
   PREFECTURES,
   EMPLOYMENT_INCOME_DEDUCTION_BRACKETS,
 } from "./constants";
@@ -80,17 +81,38 @@ export function calculateSocialInsurance(
   prefecture: string,
   employmentType: string = 'regular'
 ): SocialInsurance {
-  // Freelancers handle their own insurance differently
+  // Freelancers pay national insurance (cheaper but still significant)
   if (employmentType === 'freelance') {
+    // National pension: Fixed amount regardless of income
+    const pensionInsurance = FREELANCER_INSURANCE.NATIONAL_PENSION_ANNUAL;
+    
+    // National health insurance: Based on income, varies by municipality
+    // Using taxable income base for more accurate calculation
+    const taxableIncome = grossSalary - calculateEmploymentIncomeDeduction(grossSalary);
+    const healthInsurance = Math.floor(taxableIncome * FREELANCER_INSURANCE.NATIONAL_HEALTH_INSURANCE_RATE);
+    
+    // Nursing care insurance for 40+ (part of national health insurance)
+    const nursingCareInsurance = age >= SOCIAL_INSURANCE.NURSING_CARE_AGE_THRESHOLD 
+      ? Math.floor(taxableIncome * FREELANCER_INSURANCE.NURSING_CARE_RATE)
+      : 0;
+    
+    // No employment insurance for freelancers
+    const employmentInsurance = 0;
+    
+    const totalSocialInsurance = healthInsurance + nursingCareInsurance + pensionInsurance + employmentInsurance;
+    
+    logger.debug(`Freelancer insurance: Health ¥${healthInsurance.toLocaleString()}, Pension ¥${pensionInsurance.toLocaleString()}, Nursing ¥${nursingCareInsurance.toLocaleString()}`);
+    
     return {
-      healthInsurance: 0,
-      nursingCareInsurance: 0,
-      pensionInsurance: 0,
-      employmentInsurance: 0,
-      totalSocialInsurance: 0,
+      healthInsurance,
+      nursingCareInsurance,
+      pensionInsurance,
+      employmentInsurance,
+      totalSocialInsurance,
     };
   }
   
+  // Employee social insurance calculations
   // Find prefecture health insurance rate
   const prefectureData = PREFECTURES.find(p => p.name === prefecture);
   const healthInsuranceRate = prefectureData?.healthInsuranceRate || 0.0991; // Default to Tokyo rate

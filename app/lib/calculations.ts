@@ -77,8 +77,20 @@ export function calculateIncomeTax(taxableIncome: number): TaxCalculation {
 export function calculateSocialInsurance(
   grossSalary: number, 
   age: number, 
-  prefecture: string
+  prefecture: string,
+  employmentType: string = 'regular'
 ): SocialInsurance {
+  // Freelancers handle their own insurance differently
+  if (employmentType === 'freelance') {
+    return {
+      healthInsurance: 0,
+      nursingCareInsurance: 0,
+      pensionInsurance: 0,
+      employmentInsurance: 0,
+      totalSocialInsurance: 0,
+    };
+  }
+  
   // Find prefecture health insurance rate
   const prefectureData = PREFECTURES.find(p => p.name === prefecture);
   const healthInsuranceRate = prefectureData?.healthInsuranceRate || 0.0991; // Default to Tokyo rate
@@ -121,9 +133,9 @@ export function calculateResidentTax(taxableIncome: number): ResidentTax {
  * Main salary calculation function
  */
 export function calculateSalary(input: SalaryInput): SalaryBreakdown {
-  const { annualGrossSalary, age, prefecture } = input;
+  const { annualGrossSalary, age, prefecture, employmentType } = input;
   
-  logger.info(`Starting salary calculation for ¥${annualGrossSalary.toLocaleString()}, age ${age}, ${prefecture}`);
+  logger.info(`Starting salary calculation for ¥${annualGrossSalary.toLocaleString()}, age ${age}, ${prefecture}, ${employmentType}`);
   
   // Step 1: Calculate employment income deduction
   const employmentIncomeDeduction = calculateEmploymentIncomeDeduction(annualGrossSalary);
@@ -134,8 +146,8 @@ export function calculateSalary(input: SalaryInput): SalaryBreakdown {
   const taxation = calculateIncomeTax(taxableIncome);
   logger.debug(`Total national tax: ¥${taxation.totalNationalTax.toLocaleString()}`);
   
-  // Step 3: Calculate social insurance
-  const socialInsurance = calculateSocialInsurance(annualGrossSalary, age, prefecture);
+  // Step 3: Calculate social insurance (varies by employment type)
+  const socialInsurance = calculateSocialInsurance(annualGrossSalary, age, prefecture, employmentType);
   logger.debug(`Total social insurance: ¥${socialInsurance.totalSocialInsurance.toLocaleString()}`);
   
   // Step 4: Calculate resident tax

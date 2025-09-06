@@ -27,7 +27,7 @@ const formSchema = z.object({
   age: z.number().min(18).max(100),
   prefecture: z.string().min(1),
   dependents: z.number().min(0).max(10),
-  employmentType: z.enum(['regular', 'contract', 'part-time']),
+  employmentType: z.enum(['regular', 'contract', 'part-time', 'freelance']),
   hasEmployerWithholding: z.boolean(),
 });
 
@@ -169,6 +169,7 @@ export function SalaryForm({ onCalculate }: SalaryFormProps) {
                     <SelectItem value="regular">Regular Employee (正社員)</SelectItem>
                     <SelectItem value="contract">Contract Employee (契約社員)</SelectItem>
                     <SelectItem value="part-time">Part-time (パート)</SelectItem>
+                    <SelectItem value="freelance">Freelance (フリーランス)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

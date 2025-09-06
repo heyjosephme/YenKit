@@ -6,7 +6,7 @@ export const SalaryInputSchema = z.object({
   age: z.number().min(18).max(100),
   prefecture: z.string().min(1),
   dependents: z.number().min(0).max(10),
-  employmentType: z.enum(['regular', 'contract', 'part-time']),
+  employmentType: z.enum(['regular', 'contract', 'part-time', 'freelance']),
   hasEmployerWithholding: z.boolean().default(true),
 });
 

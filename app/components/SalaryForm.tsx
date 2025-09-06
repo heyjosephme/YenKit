@@ -1,153 +1,188 @@
-import { Form } from "react-router";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { PREFECTURES } from "~/lib/constants";
+import type { SalaryInput } from "~/lib/schemas";
+
+const formSchema = z.object({
+  annualGrossSalary: z.number().min(300).max(10000),
+  age: z.number().min(18).max(100),
+  prefecture: z.string().min(1),
+  dependents: z.number().min(0).max(10),
+  employmentType: z.enum(['regular', 'contract', 'part-time']),
+  hasEmployerWithholding: z.boolean(),
+});
 
 interface SalaryFormProps {
-  onCalculate: (data: {
-    annualGrossSalary: number;
-    age: number;
-    prefecture: string;
-    dependents: number;
-    employmentType: 'regular' | 'contract' | 'part-time';
-    hasEmployerWithholding: boolean;
-  }) => void;
+  onCalculate: (data: SalaryInput) => void;
 }
 
 export function SalaryForm({ onCalculate }: SalaryFormProps) {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    
-    const data = {
-      annualGrossSalary: Number(formData.get('annualGrossSalary')),
-      age: Number(formData.get('age')),
-      prefecture: String(formData.get('prefecture')),
-      dependents: Number(formData.get('dependents')),
-      employmentType: formData.get('employmentType') as 'regular' | 'contract' | 'part-time',
-      hasEmployerWithholding: formData.get('hasEmployerWithholding') === 'on',
-    };
-    
-    onCalculate(data);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      annualGrossSalary: 600,
+      age: 30,
+      prefecture: "Tokyo",
+      dependents: 0,
+      employmentType: "regular",
+      hasEmployerWithholding: true,
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    onCalculate(values);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Annual Gross Salary */}
-        <div>
-          <label htmlFor="annualGrossSalary" className="block text-sm font-medium text-gray-700 mb-2">
-            Annual Gross Salary (万円)
-          </label>
-          <input
-            type="number"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Annual Gross Salary */}
+          <FormField
+            control={form.control}
             name="annualGrossSalary"
-            id="annualGrossSalary"
-            min="300"
-            max="10000"
-            step="10"
-            defaultValue="600"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="600 (for ¥6,000,000)"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Annual Gross Salary (万円)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="600"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Enter in 万円 (e.g., 600 = ¥6,000,000)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <p className="mt-1 text-xs text-gray-500">Enter in 万円 (e.g., 600 = ¥6,000,000)</p>
-        </div>
 
-        {/* Age */}
-        <div>
-          <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
-            Age
-          </label>
-          <input
-            type="number"
+          {/* Age */}
+          <FormField
+            control={form.control}
             name="age"
-            id="age"
-            min="18"
-            max="100"
-            defaultValue="30"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Age</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Affects nursing care insurance (40+)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <p className="mt-1 text-xs text-gray-500">Affects nursing care insurance (40+)</p>
-        </div>
 
-        {/* Prefecture */}
-        <div>
-          <label htmlFor="prefecture" className="block text-sm font-medium text-gray-700 mb-2">
-            Prefecture
-          </label>
-          <select
+          {/* Prefecture */}
+          <FormField
+            control={form.control}
             name="prefecture"
-            id="prefecture"
-            defaultValue="Tokyo"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {PREFECTURES.map((pref) => (
-              <option key={pref.name} value={pref.name}>
-                {pref.name} ({(pref.healthInsuranceRate * 100).toFixed(2)}%)
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-gray-500">Health insurance rate varies by prefecture</p>
-        </div>
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Prefecture</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prefecture" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {PREFECTURES.map((pref) => (
+                      <SelectItem key={pref.name} value={pref.name}>
+                        {pref.name} ({(pref.healthInsuranceRate * 100).toFixed(2)}%)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Health insurance rate varies by prefecture
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Dependents */}
-        <div>
-          <label htmlFor="dependents" className="block text-sm font-medium text-gray-700 mb-2">
-            Dependents
-          </label>
-          <input
-            type="number"
+          {/* Dependents */}
+          <FormField
+            control={form.control}
             name="dependents"
-            id="dependents"
-            min="0"
-            max="10"
-            defaultValue="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dependents</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormDescription>
+                  For future tax deduction calculations
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <p className="mt-1 text-xs text-gray-500">For future tax deduction calculations</p>
-        </div>
 
-        {/* Employment Type */}
-        <div>
-          <label htmlFor="employmentType" className="block text-sm font-medium text-gray-700 mb-2">
-            Employment Type
-          </label>
-          <select
+          {/* Employment Type */}
+          <FormField
+            control={form.control}
             name="employmentType"
-            id="employmentType"
-            defaultValue="regular"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="regular">Regular Employee (正社員)</option>
-            <option value="contract">Contract Employee (契約社員)</option>
-            <option value="part-time">Part-time (パート)</option>
-          </select>
-        </div>
-
-        {/* Employer Withholding */}
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            name="hasEmployerWithholding"
-            id="hasEmployerWithholding"
-            defaultChecked
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Employment Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="regular">Regular Employee (正社員)</SelectItem>
+                    <SelectItem value="contract">Contract Employee (契約社員)</SelectItem>
+                    <SelectItem value="part-time">Part-time (パート)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <label htmlFor="hasEmployerWithholding" className="text-sm text-gray-700">
-            Employer handles tax withholding (源泉徴収)
-          </label>
         </div>
-      </div>
 
-      <div className="text-center">
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200"
-        >
-          Calculate Take-Home Pay 💰
-        </button>
-      </div>
-    </form>
+        <div className="text-center">
+          <Button type="submit" size="lg" className="px-8">
+            Calculate Take-Home Pay 💰
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

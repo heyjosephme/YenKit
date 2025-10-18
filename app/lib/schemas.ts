@@ -6,8 +6,17 @@ export const SalaryInputSchema = z.object({
   age: z.number().min(18).max(100),
   prefecture: z.string().min(1),
   dependents: z.number().min(0).max(10),
-  employmentType: z.enum(['regular', 'contract', 'part-time', 'freelance']),
+  employmentType: z.enum(["regular", "contract", "part-time", "freelance"]),
   hasEmployerWithholding: z.boolean().default(true),
+  // Freelance-specific fields
+  freelancePaymentType: z.enum(["hourly", "annual"]).optional(),
+  hourlyRate: z.number().min(1000).max(50000).optional(), // ¥1,000 to ¥50,000 per hour
+  hoursPerWeek: z.number().min(1).max(80).optional(), // 1-80 hours per week
+  weeksPerYear: z.number().min(1).max(52).optional(), // 1-52 weeks per year
+
+  // Freelance tax options
+  blueFormFiling: z.enum(["none", "blue_65", "blue_55", "blue_10"]).optional(), // Blue form filing type
+  businessExpenseRate: z.number().min(0).max(0.8).optional(), // 0-80% of gross income
 });
 
 // Calculation result schemas
@@ -37,14 +46,19 @@ export const SalaryBreakdownSchema = z.object({
   grossMonthly: z.number(),
   employmentIncomeDeduction: z.number(),
   taxableIncome: z.number(),
-  
+
   taxation: TaxCalculationSchema,
   socialInsurance: SocialInsuranceSchema,
   residentTax: ResidentTaxSchema,
-  
+
   totalDeductions: z.number(),
   netAnnual: z.number(),
   netMonthly: z.number(),
+
+  // Freelance-specific fields (optional)
+  businessExpenses: z.number().optional(),
+  blueFormDeduction: z.number().optional(),
+  businessIncome: z.number().optional(), // Gross - expenses
 });
 
 // Tax bracket schema

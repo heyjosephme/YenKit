@@ -57,13 +57,38 @@ export function ResultsDisplay({ results, title, isFreelancer }: ResultsDisplayP
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Income & Deductions</h4>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span>Gross {getPeriodText()} Salary:</span>
+              <span>Gross {getPeriodText()} {isFreelancer ? "Revenue" : "Salary"}:</span>
               <span className="font-medium">{formatCurrency(getAmount(results.grossAnnual, results.grossMonthly))}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Employment Income Deduction:</span>
-              <span>-{formatCurrency(getAmount(results.employmentIncomeDeduction, Math.floor(results.employmentIncomeDeduction / 12)))}</span>
-            </div>
+
+            {isFreelancer ? (
+              <>
+                {results.businessExpenses !== undefined && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Business Expenses (経費):</span>
+                    <span>-{formatCurrency(getAmount(results.businessExpenses, Math.floor(results.businessExpenses / 12)))}</span>
+                  </div>
+                )}
+                {results.businessIncome !== undefined && (
+                  <div className="flex justify-between">
+                    <span>Business Income:</span>
+                    <span className="font-medium">{formatCurrency(getAmount(results.businessIncome, Math.floor(results.businessIncome / 12)))}</span>
+                  </div>
+                )}
+                {results.blueFormDeduction !== undefined && results.blueFormDeduction > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Blue Form Deduction (青色申告控除):</span>
+                    <span>-{formatCurrency(getAmount(results.blueFormDeduction, Math.floor(results.blueFormDeduction / 12)))}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex justify-between text-gray-600">
+                <span>Employment Income Deduction:</span>
+                <span>-{formatCurrency(getAmount(results.employmentIncomeDeduction, Math.floor(results.employmentIncomeDeduction / 12)))}</span>
+              </div>
+            )}
+
             <div className="flex justify-between border-t pt-2">
               <span className="font-medium">Taxable Income:</span>
               <span className="font-medium">{formatCurrency(getAmount(results.taxableIncome, Math.floor(results.taxableIncome / 12)))}</span>
@@ -160,20 +185,30 @@ export function ResultsDisplay({ results, title, isFreelancer }: ResultsDisplayP
             <p className="font-medium text-lg">{formatCurrency(getAmount(results.grossAnnual, results.grossMonthly))}</p>
           </div>
           <div>
-            <span className="text-gray-600">Total Deductions:</span>
-            <p className="font-medium text-lg text-red-600">{formatCurrency(getAmount(results.totalDeductions, Math.floor(results.totalDeductions / 12)))}</p>
+            <span className="text-gray-600">{isFreelancer ? "Total Expenses + Taxes:" : "Total Deductions:"}</span>
+            <p className="font-medium text-lg text-red-600">
+              {formatCurrency(getAmount(
+                results.totalDeductions + (results.businessExpenses || 0),
+                Math.floor((results.totalDeductions + (results.businessExpenses || 0)) / 12)
+              ))}
+            </p>
           </div>
           <div>
             <span className="text-gray-600">Net {getPeriodText()}:</span>
             <p className="font-medium text-lg text-green-600">{formatCurrency(getAmount(results.netAnnual, results.netMonthly))}</p>
           </div>
           <div>
-            <span className="text-gray-600">Effective Tax Rate:</span>
+            <span className="text-gray-600">Effective {isFreelancer ? "Burden" : "Tax"} Rate:</span>
             <p className="font-medium text-lg">
-              {((results.totalDeductions / results.grossAnnual) * 100).toFixed(1)}%
+              {(((results.totalDeductions + (results.businessExpenses || 0)) / results.grossAnnual) * 100).toFixed(1)}%
             </p>
           </div>
         </div>
+        {isFreelancer && (
+          <p className="text-xs text-gray-500 mt-3">
+            *Freelance calculation includes business expenses, blue form deductions, and uses national insurance rates
+          </p>
+        )}
       </div>
     </div>
   );
